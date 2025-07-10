@@ -1,8 +1,22 @@
 from decimal import Decimal
 from typing import Annotated, Optional
+from datetime import datetime
+
 from bson import Decimal128
 from pydantic import AfterValidator, Field
+
 from store.schemas.base import BaseSchemaMixin, OutSchema
+
+
+# 👇 Converte Decimal128 → Decimal para entrada do MongoDB
+def convert_decimal_128(v):
+    if isinstance(v, Decimal128):
+        return v.to_decimal()
+    return v
+
+
+# Usar em campos que recebem Decimal do MongoDB
+DecimalFromDB = Annotated[Decimal, AfterValidator(convert_decimal_128)]
 
 
 class ProductBase(BaseSchemaMixin):
@@ -12,25 +26,19 @@ class ProductBase(BaseSchemaMixin):
     status: bool = Field(..., description="Product status")
 
 
-class ProductIn(ProductBase, BaseSchemaMixin):
+class ProductIn(ProductBase):
     ...
 
 
 class ProductOut(ProductIn, OutSchema):
-    ...
-
-
-def convert_decimal_128(v):
-    return Decimal128(str(v))
-
-
-Decimal_ = Annotated[Decimal, AfterValidator(convert_decimal_128)]
+    updated_at: Optional[datetime] = Field(None, description="Data da última atualização")
 
 
 class ProductUpdate(BaseSchemaMixin):
     quantity: Optional[int] = Field(None, description="Product quantity")
-    price: Optional[Decimal_] = Field(None, description="Product price")
+    price: Optional[DecimalFromDB] = Field(None, description="Product price")
     status: Optional[bool] = Field(None, description="Product status")
+    updated_at: Optional[datetime] = Field(None, description="Data manual de atualização")
 
 
 class ProductUpdateOut(ProductOut):

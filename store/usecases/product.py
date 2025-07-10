@@ -5,7 +5,8 @@ import pymongo
 from store.db.mongo import db_client
 from store.models.product import ProductModel
 from store.schemas.product import ProductIn, ProductOut, ProductUpdate, ProductUpdateOut
-from store.core.exceptions import NotFoundException
+from store.core.exceptions import NotFoundException, InsertException
+
 
 
 class ProductUsecase:
@@ -49,5 +50,12 @@ class ProductUsecase:
 
         return True if result.deleted_count > 0 else False
 
-
+    async def create(self, body: ProductIn) -> ProductOut:
+        try:
+            # lógica de inserção no repositório (por ex. MongoDB, PostgreSQL, etc)
+            result = await self.repo.insert(body)
+            return result
+        except Exception as exc:
+            raise InsertException(str(exc))
+        
 product_usecase = ProductUsecase()

@@ -2,7 +2,7 @@
 name = "tdd project"
 version = "0.0.1"
 description = ""
-authors = ["Nayanna Nara <nayanna501@gmail.com>"]
+authors = ["Rui Diniz"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -16,6 +16,9 @@ pytest = "^7.4.3"
 pytest-asyncio = "^0.21.1"
 pre-commit = "^3.5.0"
 httpx = "^0.25.1"
+
+[tool.poetry.group.dev.dependencies]
+pydantic-settings = "^2.10.1"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 import pymongo
+from bson import Decimal128
 
 from store.db.mongo import db_client
 from store.models.product import ProductModel
@@ -33,8 +34,24 @@ class ProductUsecase:
 
         return ProductOut(**result)
 
-    async def query(self) -> List[ProductOut]:
-        return [ProductOut(**item) async for item in self.collection.find()]
+    async def query(
+        self,
+        price_min: Optional[float] = None,
+        price_max: Optional[float] = None
+    ) -> List[ProductOut]:
+        filter_query = {}
+
+        # Filtro por faixa de preço, se fornecido
+        if price_min is not None or price_max is not None:
+            price_filter = {}
+            if price_min is not None:
+                price_filter["$gt"] = Decimal128(str(price_min))
+            if price_max is not None:
+                price_filter["$lt"] = Decimal128(str(price_max))
+            filter_query["price"] = price_filter
+
+        results = self.collection.find(filter_query)
+        return [ProductOut(**item) async for item in results]
 
     async def update(self, id: UUID, body: ProductUpdate) -> ProductUpdateOut:
         # Verifica se o produto existe antes de atualizar
@@ -61,7 +78,6 @@ class ProductUsecase:
             raise NotFoundException(message=f"Produto não encontrado com o ID: {id}")
 
         result = await self.collection.delete_one({"id": id})
-
         return result.deleted_count > 0
 
 
